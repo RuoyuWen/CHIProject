@@ -1,106 +1,171 @@
-# AI Content Generator
+# 🎨 AI Scene Designer
 
-An AI-powered intelligent content generation interface that supports conversational design for scenes, sound effects, and avatar appearances.
+**Create stunning scenes with AI-powered design assistance**
 
-## Features
+一个基于React + TypeScript的智能场景设计工具，集成双LLM系统，为创作者提供专业的AI设计助手。
 
-- **Three Content Modules**: Scene design, sound effect selection, avatar appearance design
-- **Intelligent Conversations**: Chat with professional AI assistants to refine your creativity
-- **User-Controlled Completion**: Complete designs when you're satisfied with the results
-- **Modern UI**: Beautiful interface built with Tailwind CSS
-- **Real-time Interaction**: Smooth chat experience with instant feedback
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![React](https://img.shields.io/badge/React-18.2.0-61DAFB.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS-3.3-38B2AC.svg)
 
-## 快速开始
+## ✨ 核心特性
 
-### 1. 安装依赖
+### 🧠 双LLM智能系统
+- **modeD (Dual)**: 先进的双LLM架构，包含内部逻辑分析模块(LLM-A)和对话渲染模块(LLM-B)
+- **modeT (Tradition)**: 传统单AI对话模式，直接交互体验
+- **智能状态分析**: S0-S9用户状态识别和12种策略性对话引导
 
-```bash
-npm install
-```
+### 🎯 智能工作流程
+- **AI优先设计**: 用户先与AI交互完成设计，再解锁手动编辑
+- **模块化内容**: 场景、音效、角色设计（当前专注场景设计）
+- **实时分析面板**: 显示LLM-A的内部状态、策略和目标引导
 
-### 2. 配置API密钥
+### 🎨 现代化界面
+- **玻璃态设计**: 半透明背景与模糊效果
+- **渐变动画**: 平滑的微动画和过渡效果
+- **响应式布局**: 完美适配桌面和移动设备
+- **直观状态指示**: 清晰的禁用/启用状态视觉反馈
 
-复制 `.env.example` 文件并重命名为 `.env`：
+### ⚙️ 灵活配置
+- **多模型支持**: GPT-4.1, GPT-4.1-Mini, GPT-4.1-Nano, GPT-4o
+- **自定义提示词**: 分别配置LLM-A、LLM-B和传统模式的系统提示
+- **参数调节**: 温度、最大Token数、目标场景等
+- **本地存储**: 设置自动保存，无需重复配置
 
-```bash
-copy .env.example .env
-```
+## 🚀 快速开始
 
-编辑 `.env` 文件，添加你的OpenAI API密钥：
+### 环境要求
+- Node.js 16+ 
+- npm 或 yarn
+- OpenAI API Key
 
-```env
-VITE_OPENAI_API_KEY=sk-your-actual-api-key-here
-```
+### 安装步骤
 
-> **获取API密钥**：访问 [OpenAI平台](https://platform.openai.com/api-keys) 创建API密钥
+1. **克隆项目**
+   ```bash
+   git clone https://github.com/RuoyuWen/CHIProject.git
+   cd CHIProject
+   ```
 
-### 3. 启动开发服务器
+2. **安装依赖**
+   ```bash
+   npm install
+   ```
 
-```bash
-npm run dev
-```
+3. **启动开发服务器**
+   ```bash
+   npm run dev
+   ```
 
-应用将在 http://localhost:3000 启动
+4. **配置API Key**
+   - 访问 http://localhost:5173
+   - 在设置页面输入您的OpenAI API Key
+   - 选择AI模式（modeD/modeT）
+   - 配置其他参数后保存
 
-## 使用说明
+## 🎯 使用指南
 
-1. **选择模块**：点击左侧任意模块的"开始设计"按钮
-2. **对话交流**：在右侧聊天界面描述你的需求和想法
-3. **AI辅助**：专业AI助手会帮助你完善和优化设计方案
-4. **确认应用**：当AI检测到你满意某个方案时，会弹出确认框
-5. **自动填充**：确认后，AI总结的内容会自动填入左侧对应区域
+### 基础流程
+1. **设置配置** → 选择AI模式和模型参数
+2. **开始设计** → 点击"AI Design: Scene"进入对话
+3. **AI引导** → 与AI交流，完善场景设计理念
+4. **确认内容** → 查看AI总结，确认应用到设计区域
+5. **手动精修** → 编辑区域解锁，可进一步调整内容
+6. **下载作品** → 完成后下载最终设计文件
 
-## 技术栈
+### modeD (双LLM) 特色
+- **智能状态识别**: 自动判断用户当前设计阶段
+- **策略性引导**: 根据状态选择最适合的对话策略
+- **用户主导感**: 保持用户感觉主控的同时智能收敛
+- **实时分析**: 查看AI的内部思考过程
 
-- **前端框架**：React 18 + TypeScript
-- **样式**：Tailwind CSS
-- **AI集成**：OpenAI GPT-4o-mini
-- **图标**：Lucide React
-- **构建工具**：Vite
+### modeT (传统) 特色
+- **直接对话**: 熟悉的聊天体验
+- **快速响应**: 单模型处理，响应更快
+- **简单配置**: 配置相对简单
 
-## 项目结构
+## 🔧 技术架构
 
+### 前端技术栈
+- **React 18** - 现代化组件开发
+- **TypeScript** - 类型安全
+- **Vite** - 快速构建工具
+- **Tailwind CSS** - 原子化CSS框架
+- **Lucide React** - 现代图标库
+
+### AI集成
+- **OpenAI API** - GPT模型调用
+- **双LLM架构** - LLM-A分析 + LLM-B渲染
+- **状态管理** - React Hooks + LocalStorage
+- **错误处理** - 完善的API错误处理机制
+
+### 项目结构
 ```
 src/
 ├── components/          # React组件
-│   ├── ContentPanel.tsx # 左侧内容面板
-│   ├── ChatPanel.tsx    # 右侧聊天面板
-│   └── ConfirmDialog.tsx# 确认对话框
-├── utils/
-│   └── openai.ts       # OpenAI API工具函数
+│   ├── ChatPanel.tsx   # 聊天面板
+│   ├── ContentPanel.tsx # 内容编辑面板
+│   ├── SettingsPanel.tsx # 设置页面
+│   └── ConfirmDialog.tsx # 确认对话框
+├── utils/               # 工具函数
+│   ├── openai.ts       # OpenAI API封装
+│   └── llmModules.ts   # 双LLM系统逻辑
 ├── types.ts            # TypeScript类型定义
-├── App.tsx             # 主应用组件
-├── main.tsx            # 应用入口
-└── index.css           # 全局样式
+└── App.tsx             # 主应用组件
 ```
 
-## 开发命令
+## 🎨 界面预览
 
+### 设置页面
+- 🔑 API Key配置
+- 🤖 AI模式选择 (modeD/modeT)
+- ⚙️ 高级参数设置
+- 🧠 双LLM提示词配置
+
+### 主界面
+- 📝 **左侧**: 场景设计编辑区域（AI完成后解锁）
+- 💬 **右侧**: AI对话面板
+- 🔍 **分析面板**: 双LLM模式下的实时状态分析
+
+## 🚀 部署
+
+### 开发环境
 ```bash
-# 启动开发服务器
-npm run dev
-
-# 构建生产版本
-npm run build
-
-# 预览生产版本
-npm run preview
-
-# 代码检查
-npm run lint
+npm run dev          # 启动开发服务器
+npm run build        # 构建生产版本
+npm run preview      # 预览生产构建
 ```
 
-## 注意事项
+### 生产部署
+项目基于Vite构建，支持部署到：
+- Vercel
+- Netlify  
+- GitHub Pages
+- 任何静态托管服务
 
-- 请确保你的OpenAI API密钥有足够的额度
-- API调用需要网络连接
-- 建议在安全的环境中使用，避免API密钥泄露
-- 首次使用可能需要几秒钟的响应时间
+## 🤝 贡献
 
-## 贡献
+欢迎提交Issue和Pull Request！
 
-欢迎提交Issue和Pull Request来改进这个项目！
+### 开发规范
+- 使用TypeScript进行类型安全开发
+- 遵循React Hooks最佳实践
+- 保持组件单一职责
+- 添加必要的注释和文档
 
-## 许可证
+## 📄 许可证
 
-MIT License 
+MIT License - 查看 [LICENSE](LICENSE) 文件了解详情
+
+## 🙏 致谢
+
+- OpenAI for providing powerful AI models
+- React community for excellent development tools
+- Tailwind CSS for beautiful styling system
+
+---
+
+**🎨 开始您的AI辅助设计之旅吧！**
+
+> 如有问题或建议，欢迎提交Issue或联系开发者。
