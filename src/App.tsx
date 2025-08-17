@@ -15,9 +15,15 @@ function App() {
     apiKey: string;
     chatModel: string;
     summaryModel: string;
+    llmAModel: string;
+    llmBModel: string;
     language: string;
     temperature: number;
     maxTokens: number;
+    llmATemperature: number;
+    llmAMaxTokens: number;
+    llmBTemperature: number;
+    llmBMaxTokens: number;
     downloadPath: string;
     scenePrompt: string;
     llmAPrompt: string;
@@ -40,9 +46,15 @@ function App() {
         apiKey: savedApiKey,
         chatModel: savedChatModel || 'gpt-4.1-mini',
         summaryModel: savedSummaryModel || 'gpt-4.1-nano',
+        llmAModel: localStorage.getItem('llm_a_model') || 'gpt-4.1',
+        llmBModel: localStorage.getItem('llm_b_model') || 'gpt-4.1-mini',
         language: savedLanguage || 'en-US',
         temperature: parseFloat(localStorage.getItem('ai_temperature') || '0.7'),
         maxTokens: parseInt(localStorage.getItem('ai_max_tokens') || '1000'),
+        llmATemperature: parseFloat(localStorage.getItem('llm_a_temperature') || '0.3'),
+        llmAMaxTokens: parseInt(localStorage.getItem('llm_a_max_tokens') || '500'),
+        llmBTemperature: parseFloat(localStorage.getItem('llm_b_temperature') || '0.8'),
+        llmBMaxTokens: parseInt(localStorage.getItem('llm_b_max_tokens') || '800'),
         downloadPath: localStorage.getItem('download_path') || 'AI_Content',
         scenePrompt: localStorage.getItem('scene_prompt') || 'You are a professional scene designer helping users design and refine various scene descriptions.',
         llmAPrompt: localStorage.getItem('llm_a_prompt') || 'You are "Module A" (Internal Logic). Output only minimal JSON per turn, no explanations. Analyze user state (S0-S9), generate 2-3 strategy candidates with priority, maintain agency-preserving force while converging to target.',
@@ -202,9 +214,15 @@ function App() {
     apiKey: string;
     chatModel: string;
     summaryModel: string;
+    llmAModel: string;
+    llmBModel: string;
     language: string;
     temperature: number;
     maxTokens: number;
+    llmATemperature: number;
+    llmAMaxTokens: number;
+    llmBTemperature: number;
+    llmBMaxTokens: number;
     downloadPath: string;
     scenePrompt: string;
     llmAPrompt: string;

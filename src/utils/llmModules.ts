@@ -4,8 +4,14 @@ interface LLMSettings {
   apiKey: string;
   chatModel: string;
   summaryModel: string;
+  llmAModel: string;
+  llmBModel: string;
   temperature: number;
   maxTokens: number;
+  llmATemperature: number;
+  llmAMaxTokens: number;
+  llmBTemperature: number;
+  llmBMaxTokens: number;
   llmAPrompt?: string;
   llmBPrompt?: string;
 }
@@ -178,13 +184,13 @@ ${conversationSummary}
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: settings.chatModel,
+        model: settings.llmAModel,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.2,
-        max_tokens: 500,
+        temperature: settings.llmATemperature,
+        max_tokens: settings.llmAMaxTokens,
         top_p: 0.9,
         stop: ['\n}', '\n']
       }),
@@ -234,13 +240,13 @@ ${JSON.stringify(llmaOutput)}
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: settings.summaryModel, // 使用summary模型，通常更便宜
+        model: settings.llmBModel,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.4,
-        max_tokens: 200,
+        temperature: settings.llmBTemperature,
+        max_tokens: settings.llmBMaxTokens,
       }),
     });
 
@@ -284,7 +290,7 @@ export async function processDualLLM(conversationHistory: any[], target: string,
       analysis: createFallbackLLMAOutput(target),
       response: '我们继续聊聊这个场景设计吧，你有什么想法？',
       success: false,
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 }

@@ -11,9 +11,15 @@ interface ChatPanelProps {
     apiKey: string;
     chatModel: string;
     summaryModel: string;
+    llmAModel: string;
+    llmBModel: string;
     language: string;
     temperature: number;
     maxTokens: number;
+    llmATemperature: number;
+    llmAMaxTokens: number;
+    llmBTemperature: number;
+    llmBMaxTokens: number;
     downloadPath: string;
     scenePrompt: string;
     llmAPrompt: string;
@@ -97,8 +103,14 @@ Please tell me your ideas and requirements, and I'll help you refine your design
           apiKey: settings?.apiKey || '',
           chatModel: settings?.chatModel || 'gpt-4.1-mini',
           summaryModel: settings?.summaryModel || 'gpt-4.1-nano',
+          llmAModel: settings?.llmAModel || 'gpt-4.1',
+          llmBModel: settings?.llmBModel || 'gpt-4.1-mini',
           temperature: settings?.temperature || 0.7,
           maxTokens: settings?.maxTokens || 1000,
+          llmATemperature: settings?.llmATemperature || 0.3,
+          llmAMaxTokens: settings?.llmAMaxTokens || 500,
+          llmBTemperature: settings?.llmBTemperature || 0.8,
+          llmBMaxTokens: settings?.llmBMaxTokens || 800,
           llmAPrompt: settings?.llmAPrompt,
           llmBPrompt: settings?.llmBPrompt
         });

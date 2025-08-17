@@ -6,9 +6,15 @@ interface SettingsPanelProps {
     apiKey: string;
     chatModel: string;
     summaryModel: string;
+    llmAModel: string;
+    llmBModel: string;
     language: string;
     temperature: number;
     maxTokens: number;
+    llmATemperature: number;
+    llmAMaxTokens: number;
+    llmBTemperature: number;
+    llmBMaxTokens: number;
     downloadPath: string;
     scenePrompt: string;
     llmAPrompt: string;
@@ -24,9 +30,15 @@ export function SettingsPanel({ onSettingsComplete }: SettingsPanelProps) {
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('openai_api_key') || '');
   const [chatModel, setChatModel] = useState(() => localStorage.getItem('chat_model') || 'gpt-4.1-mini');
   const [summaryModel, setSummaryModel] = useState(() => localStorage.getItem('summary_model') || 'gpt-4.1-nano');
+  const [llmAModel, setLlmAModel] = useState(() => localStorage.getItem('llm_a_model') || 'gpt-4.1');
+  const [llmBModel, setLlmBModel] = useState(() => localStorage.getItem('llm_b_model') || 'gpt-4.1-mini');
   const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'en-US');
   const [temperature, setTemperature] = useState(() => parseFloat(localStorage.getItem('ai_temperature') || '0.7'));
   const [maxTokens, setMaxTokens] = useState(() => parseInt(localStorage.getItem('ai_max_tokens') || '1000'));
+  const [llmATemperature, setLlmATemperature] = useState(() => parseFloat(localStorage.getItem('llm_a_temperature') || '0.3'));
+  const [llmAMaxTokens, setLlmAMaxTokens] = useState(() => parseInt(localStorage.getItem('llm_a_max_tokens') || '500'));
+  const [llmBTemperature, setLlmBTemperature] = useState(() => parseFloat(localStorage.getItem('llm_b_temperature') || '0.8'));
+  const [llmBMaxTokens, setLlmBMaxTokens] = useState(() => parseInt(localStorage.getItem('llm_b_max_tokens') || '800'));
   const [downloadPath, setDownloadPath] = useState(() => localStorage.getItem('download_path') || 'AI_Content');
   const [scenePrompt, setScenePrompt] = useState(() => localStorage.getItem('scene_prompt') || 'You are a professional scene designer helping users design and refine various scene descriptions. Please discuss scene details with users, including environment, atmosphere, style, colors, and other elements. When users are satisfied with a scene description, you should provide a complete scene summary.');
   const [llmAPrompt, setLlmAPrompt] = useState(() => localStorage.getItem('llm_a_prompt') || 'You are "Module A" (Internal Logic). Output only minimal JSON per turn, no explanations. Analyze user state (S0-S9), generate 2-3 strategy candidates with priority, maintain agency-preserving force while converging to target.');
@@ -70,9 +82,15 @@ export function SettingsPanel({ onSettingsComplete }: SettingsPanelProps) {
     localStorage.setItem('openai_api_key', apiKey);
     localStorage.setItem('chat_model', chatModel);
     localStorage.setItem('summary_model', summaryModel);
+    localStorage.setItem('llm_a_model', llmAModel);
+    localStorage.setItem('llm_b_model', llmBModel);
     localStorage.setItem('app_language', language);
     localStorage.setItem('ai_temperature', temperature.toString());
     localStorage.setItem('ai_max_tokens', maxTokens.toString());
+    localStorage.setItem('llm_a_temperature', llmATemperature.toString());
+    localStorage.setItem('llm_a_max_tokens', llmAMaxTokens.toString());
+    localStorage.setItem('llm_b_temperature', llmBTemperature.toString());
+    localStorage.setItem('llm_b_max_tokens', llmBMaxTokens.toString());
     localStorage.setItem('download_path', downloadPath);
     localStorage.setItem('scene_prompt', scenePrompt);
     localStorage.setItem('llm_a_prompt', llmAPrompt);
@@ -88,9 +106,15 @@ export function SettingsPanel({ onSettingsComplete }: SettingsPanelProps) {
         apiKey, 
         chatModel, 
         summaryModel,
+        llmAModel,
+        llmBModel,
         language, 
         temperature, 
         maxTokens, 
+        llmATemperature,
+        llmAMaxTokens,
+        llmBTemperature,
+        llmBMaxTokens,
         downloadPath,
         scenePrompt,
         llmAPrompt,
@@ -253,45 +277,113 @@ export function SettingsPanel({ onSettingsComplete }: SettingsPanelProps) {
           </div>
 
           {/* Model Selection Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="group">
-              <label className="block text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
-                💬 Chat Model
-              </label>
-              <select
-                value={chatModel}
-                onChange={(e) => setChatModel(e.target.value)}
-                className="w-full px-6 py-4 border-2 border-gray-200 bg-white/70 backdrop-blur-sm rounded-xl text-lg focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300"
-              >
-                {availableModels.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-2 text-sm text-gray-600 bg-indigo-50 rounded-lg p-3">
-                💡 Used for creative conversations
-              </p>
+          <div className="space-y-6">
+            {/* Traditional Mode Models */}
+            <div className="p-6 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-200">
+              <h4 className="text-lg font-semibold bg-gradient-to-r from-gray-600 to-slate-600 bg-clip-text text-transparent mb-4 flex items-center space-x-2">
+                <span>💬</span>
+                <span>Traditional Mode Models</span>
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="group">
+                  <label className="block text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
+                    💬 Chat Model
+                  </label>
+                  <select
+                    value={chatModel}
+                    onChange={(e) => setChatModel(e.target.value)}
+                    className="w-full px-6 py-4 border-2 border-gray-200 bg-white/70 backdrop-blur-sm rounded-xl text-lg focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300"
+                  >
+                    {availableModels.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-sm text-gray-600 bg-indigo-50 rounded-lg p-3">
+                    💡 Used for traditional mode conversations
+                  </p>
+                </div>
+
+                <div className="group">
+                  <label className="block text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
+                    📝 Summary Model
+                  </label>
+                  <select
+                    value={summaryModel}
+                    onChange={(e) => setSummaryModel(e.target.value)}
+                    className="w-full px-6 py-4 border-2 border-gray-200 bg-white/70 backdrop-blur-sm rounded-xl text-lg focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300"
+                  >
+                    {availableModels.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-sm text-gray-600 bg-purple-50 rounded-lg p-3">
+                    💡 Used for content summarization
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="group">
-              <label className="block text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
-                📝 Summary Model
-              </label>
-              <select
-                value={summaryModel}
-                onChange={(e) => setSummaryModel(e.target.value)}
-                className="w-full px-6 py-4 border-2 border-gray-200 bg-white/70 backdrop-blur-sm rounded-xl text-lg focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300"
-              >
-                {availableModels.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-2 text-sm text-gray-600 bg-purple-50 rounded-lg p-3">
-                💡 Used for content summarization
-              </p>
+            {/* Dual-LLM Mode Models */}
+            <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+              <h4 className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4 flex items-center space-x-2">
+                <span>🧠</span>
+                <span>Dual-LLM Mode Models</span>
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="group">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">A</span>
+                    </div>
+                    <label className="block text-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                      LLM-A (Logic)
+                    </label>
+                  </div>
+                  <select
+                    value={llmAModel}
+                    onChange={(e) => setLlmAModel(e.target.value)}
+                    className="w-full px-6 py-4 border-2 border-blue-200 bg-white/70 backdrop-blur-sm rounded-xl text-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300"
+                  >
+                    {availableModels.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-sm text-blue-600 bg-blue-50 rounded-lg p-3">
+                    🎯 Internal logic, state analysis, strategy planning
+                  </p>
+                </div>
+
+                <div className="group">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">B</span>
+                    </div>
+                    <label className="block text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      LLM-B (Rendering)
+                    </label>
+                  </div>
+                  <select
+                    value={llmBModel}
+                    onChange={(e) => setLlmBModel(e.target.value)}
+                    className="w-full px-6 py-4 border-2 border-purple-200 bg-white/70 backdrop-blur-sm rounded-xl text-lg focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300"
+                  >
+                    {availableModels.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-sm text-purple-600 bg-purple-50 rounded-lg p-3">
+                    💬 User interaction, conversation rendering
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -333,35 +425,134 @@ export function SettingsPanel({ onSettingsComplete }: SettingsPanelProps) {
           {showAdvanced && (
             <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
               {/* AI Parameters */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Temperature
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="2"
-                    step="0.1"
-                    value={temperature}
-                    onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">0.0-2.0 (creativity)</p>
+              <div className="space-y-6">
+                {/* Traditional Mode Parameters */}
+                <div className="p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-200">
+                  <h5 className="text-md font-semibold bg-gradient-to-r from-gray-600 to-slate-600 bg-clip-text text-transparent mb-4 flex items-center space-x-2">
+                    <span>💬</span>
+                    <span>Traditional Mode Parameters</span>
+                  </h5>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Temperature
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="2"
+                        step="0.1"
+                        value={temperature}
+                        onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">0.0-2.0 (creativity)</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Max Tokens
+                      </label>
+                      <input
+                        type="number"
+                        min="100"
+                        max="4000"
+                        value={maxTokens}
+                        onChange={(e) => setMaxTokens(parseInt(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Response length limit</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Max Tokens
-                  </label>
-                  <input
-                    type="number"
-                    min="100"
-                    max="4000"
-                    value={maxTokens}
-                    onChange={(e) => setMaxTokens(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">Response length limit</p>
+
+                {/* Dual-LLM Parameters */}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                  <h5 className="text-md font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4 flex items-center space-x-2">
+                    <span>🧠</span>
+                    <span>Dual-LLM Parameters</span>
+                  </h5>
+                  
+                  {/* LLM-A Parameters */}
+                  <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">A</span>
+                      </div>
+                      <h6 className="text-sm font-semibold text-blue-800">LLM-A (Internal Logic) Parameters</h6>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-blue-700 mb-2">
+                          A Temperature
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="2"
+                          step="0.1"
+                          value={llmATemperature}
+                          onChange={(e) => setLlmATemperature(parseFloat(e.target.value))}
+                          className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                        />
+                        <p className="mt-1 text-xs text-blue-600">Low for precise logic</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-blue-700 mb-2">
+                          A Max Tokens
+                        </label>
+                        <input
+                          type="number"
+                          min="100"
+                          max="2000"
+                          value={llmAMaxTokens}
+                          onChange={(e) => setLlmAMaxTokens(parseInt(e.target.value))}
+                          className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                        />
+                        <p className="mt-1 text-xs text-blue-600">JSON output limit</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* LLM-B Parameters */}
+                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">B</span>
+                      </div>
+                      <h6 className="text-sm font-semibold text-purple-800">LLM-B (Rendering) Parameters</h6>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-purple-700 mb-2">
+                          B Temperature
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="2"
+                          step="0.1"
+                          value={llmBTemperature}
+                          onChange={(e) => setLlmBTemperature(parseFloat(e.target.value))}
+                          className="w-full px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                        />
+                        <p className="mt-1 text-xs text-purple-600">Higher for creative text</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-purple-700 mb-2">
+                          B Max Tokens
+                        </label>
+                        <input
+                          type="number"
+                          min="100"
+                          max="2000"
+                          value={llmBMaxTokens}
+                          onChange={(e) => setLlmBMaxTokens(parseInt(e.target.value))}
+                          className="w-full px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                        />
+                        <p className="mt-1 text-xs text-purple-600">Conversation limit</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
