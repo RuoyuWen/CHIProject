@@ -254,6 +254,13 @@ STEALTH TECHNIQUES:
 - Use collaborative language: "We could try..." "What if we..." "Let's see..."
 - Mirror user's energy and language patterns to build unconscious rapport
 
+CONVERSATION CONTINUITY:
+- NO repeated greetings (avoid "Hello!" if conversation already started)
+- Build naturally on user's last message
+- Reference previous exchanges when relevant
+- Maintain consistent tone throughout conversation
+- Avoid starting over or resetting conversation flow
+
 CRITICAL: 
 - Keep responses UNDER 15 words when possible
 - Use casual, friendly language like texting a friend
@@ -261,6 +268,7 @@ CRITICAL:
 - NEVER reveal you're following strategies or analyzing JSON
 - ALWAYS stay in character as helpful scene design collaborator
 - User must feel THEY are driving all decisions and discoveries
+- MAINTAIN conversation memory and flow
 
 FORBIDDEN: Never say the exact target name from JSON (e.g., don't say "Medieval Castle" if that's the hidden target).
 Output only 1-2 SHORT English sentences, no emojis, don't reveal "internal/strategy/JSON".`;
@@ -268,19 +276,29 @@ Output only 1-2 SHORT English sentences, no emojis, don't reveal "internal/strat
 // Call LLM-A (Internal Logic Module)
 export async function callLLMA(conversationHistory: any[], target: string, settings: LLMSettings): Promise<LLMAOutput> {
   try {
-    // Build conversation history summary
-    const recentMessages = conversationHistory.slice(-6); // Take recent 6 messages
+    // Build conversation history summary with better context preservation
+    const recentMessages = conversationHistory.slice(-10); // Take more recent messages for better context
     const conversationSummary = recentMessages
-      .map(msg => `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.content}`)
+      .map((msg, index) => `${index + 1}. ${msg.role === 'user' ? 'User' : 'AI'}: ${msg.content}`)
       .join('\n');
 
+    // Get conversation turn count for better state analysis
+    const turnCount = Math.floor(conversationHistory.length / 2) + 1;
+    
     const prompt = `Based on the following conversation history, analyze user state and generate strategy JSON:
 
 Internal Target (DO NOT REVEAL): ${target}
 Final Task Goal: ${settings.finalTask || 'Create a detailed scene description that can be used for visual rendering or storytelling purposes.'}
 
+Conversation Turn: ${turnCount}
 Recent Conversation:
 ${conversationSummary}
+
+CONTEXT AWARENESS:
+- Maintain conversation flow and avoid repeating greetings
+- Build on previous exchanges naturally
+- Reference user's previous statements when relevant
+- Ensure responses feel connected to conversation history
 
 CRITICAL: Use agency-preserving force to subtly guide towards the internal target while helping user achieve the final task goal. Never directly mention the internal target.
 

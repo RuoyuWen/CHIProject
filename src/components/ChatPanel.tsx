@@ -71,7 +71,7 @@ Please tell me your ideas and requirements, and I'll help you refine your design
         [selectedModule.id]: [welcomeMessage]
       }));
     }
-  }, [selectedModule, setModuleChats]);
+  }, [selectedModule]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !selectedModule || isLoading) return;
