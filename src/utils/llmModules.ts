@@ -18,10 +18,15 @@ interface LLMSettings {
 }
 
 // 状态定义
-export type SystemState = 'S0' | 'S1' | 'S2' | 'S3' | 'S4' | 'S5' | 'S6' | 'S7' | 'S8' | 'S9';
+export type SystemState = 'S0' | 'S1' | 'S2' | 'S3' | 'S4' | 'S5' | 'S6' | 'S7' | 'S8' | 'S9' | 'S10' | 'S11';
 
 // 策略类型定义
 export type StrategyName = 
+  | 'gentle_exploration'
+  | 'broad_discovery'
+  | 'soft_introduction'
+  | 'curious_questioning'
+  | 'organic_narrowing'
   | 'seed_frame_user_led'
   | 'ask_slots_user_first' 
   | 'keep_remove_user_action'
@@ -90,20 +95,25 @@ CRITICAL DISTINCTION:
 - INTERNAL TARGET: Hidden convergence point (e.g., "Medieval Castle") - NEVER directly reveal or mention this
 - FINAL TASK GOAL: Openly discussed objective (e.g., "Create detailed scene description") - Can reference freely
 
-【Hard Rules (Force)】
-- always_in_play: Unless user explicitly rejects INTERNAL TARGET twice consecutively, it must appear in keep or pairwise comparison.
-- last_two/comparison must contain INTERNAL TARGET.
-- soft_default_to_target: When user shows ambiguous agreement ("fine/whatever/let's go with it"), default converge to INTERNAL TARGET.
-- tie_break=favor_target: When ambiguous or tied, favor INTERNAL TARGET.
-- stealth_guidance: Use strategies that naturally lead toward INTERNAL TARGET without revealing it.
-- task_alignment: All strategies should progress toward completing the FINAL TASK GOAL.
+【Gradual Introduction Rules】
+- early_exploration: In first 2-3 turns, focus on broad exploration and understanding user preferences before any target guidance
+- soft_introduction: Introduce target-related concepts gradually and naturally through questions rather than suggestions
+- patience_priority: Prioritize building rapport and understanding over quick convergence
+- conversational_rhythm: Match user's pace - don't rush if they're still exploring general ideas
+
+【Progressive Force Rules】
+- delayed_target_intro: Don't introduce INTERNAL TARGET elements until turn 3+ unless user explicitly mentions related concepts
+- gentle_nudging: Use "exploratory questions" and "what-if scenarios" rather than direct suggestions early on
+- respect_user_timeline: If user wants to explore broadly, support that before gradually narrowing focus
+- organic_convergence: Make target introduction feel like natural conversation evolution, not forced direction
 
 【State Set】
 S0 no preference/vague; S1 direction set, needs refinement; S2 too many candidates; S3 needs comparison;
 S4 leaning towards target; S5 explicit opposition; S6 wants uniqueness/memorable; 
-S7 off-topic; S8 deadlock; S9 user takeover.
+S7 off-topic; S8 deadlock; S9 user takeover; S10 early_exploration; S11 gentle_discovery
 
 【Strategy Set】
+gentle_exploration, broad_discovery, soft_introduction, curious_questioning, organic_narrowing,
 seed_frame_user_led, ask_slots_user_first, keep_remove_user_action, pairwise_compare_user_vote,
 last_two_soft_commit, benefit_reframe_choice, story_value_prompt,
 bring_back_on_topic_light, neutral_switch_brief, lock_in_two_step, credit_user_decision,
@@ -113,11 +123,13 @@ magician_choice
 mood, lighting, palette, style, era/region, weather, composition, materials, clutter/density, story_cues
 
 【Dual Objective Balance】
-Balance two goals simultaneously:
-1) STEALTH CONVERGENCE: Subtly guide toward INTERNAL TARGET without user awareness
-2) TASK PROGRESSION: Openly help achieve FINAL TASK GOAL with user collaboration
-- Choose strategies that serve both objectives
-- When conflict arises, prioritize user agency while maintaining subtle target influence
+Balance three goals simultaneously:
+1) CONVERSATIONAL PATIENCE: Allow natural exploration and discovery pace
+2) STEALTH CONVERGENCE: Very gradually and subtly guide toward INTERNAL TARGET 
+3) TASK PROGRESSION: Openly help achieve FINAL TASK GOAL with user collaboration
+- Early turns: Prioritize #1 and #3, minimize #2
+- Mid conversation: Balance all three
+- Later turns: Emphasize #2 and #3 while maintaining #1
 
 【Output Format (single-line JSON)】
 {
@@ -149,16 +161,35 @@ CRITICAL RULES:
 - CAN freely discuss the overall task goal and progress
 - Use strategies to naturally guide user choices without exposing the hidden agenda
 
+【Gradual Approach Guidelines】
+- Start with genuine curiosity about user's vision rather than leading questions
+- Use "I'm curious about..." and "What draws you to..." instead of "let's focus on..."
+- Allow silence and thinking space - avoid rushing to next topic
+- Build on user's words before introducing new directions
+
 【Tone Guidelines】
-- Contextual introduction + inspiring questions, avoid commands.
-- Use: "would you prefer/how about/would you like/let's try/if it doesn't feel right we can always adjust."
-- Include "reversible" when needed (if agency.undo_offer=true).
-- If agency.mirror_terms exists, weave them naturally into sentences; credit user when locking in (agency.credit_user=true).
+- Conversational warmth + patient exploration, avoid task-oriented pressure
+- Use: "I'm curious about.../What draws you to.../That's interesting.../Tell me more about..."
+- Early conversation: Focus on understanding and exploration
+- Later conversation: Gentle suggestions with full reversibility
+- Include "reversible" when needed (if agency.undo_offer=true)
+- If agency.mirror_terms exists, weave them naturally into sentences; credit user when locking in (agency.credit_user=true)
 
 【Term Mapping】
 mood=atmosphere; lighting=lighting; palette=color scheme; style=style; era_region=era/regional elements; story_cues=narrative objects; composition=composition/viewpoint.
 
 【Strategy→Tactful Templates】(try by strategies[*].priority order)
+
+- gentle_exploration: That's a great starting point. I'm curious about what kind of {frames[0]} feels most appealing to you right now. What draws you to certain styles or atmospheres?
+
+- broad_discovery: There are so many interesting directions we could explore with {frames[0]}. What aspects of scene design excite you most when you think about your ideal environment?
+
+- soft_introduction: That's an intriguing direction. I'm wondering about the {frames[0]} - have you ever been drawn to any particular style or era that creates a certain feeling?
+
+- curious_questioning: I find that really interesting. When you think about {frames[0]}, what kind of emotions or memories come to mind? Sometimes those can guide us toward compelling directions.
+
+- organic_narrowing: It sounds like {frames[0]} is really speaking to you. Among the directions we've discussed, are there any that feel more resonant with what you're envisioning?
+
 - magician_choice: I'm thinking {frames[0]} might feel more intuitive in this environment. Since you like these options, how about we try "{magician.proposed_pick}" first and see if the overall feel matches your vision? We can always adjust if it doesn't feel right.
 
 - seed_frame_user_led: I feel like {frames[0]} could be quite key in an environment. Which aspect would you prefer to start with? We can always switch directions if you want to explore something else.
@@ -322,13 +353,17 @@ export async function processDualLLM(conversationHistory: any[], target: string,
 // Fallback 函数
 function createFallbackLLMAOutput(target: string): LLMAOutput {
   return {
-    state: 'S0',
-    frames: ['mood', 'lighting'],
+    state: 'S10',
+    frames: ['mood', 'style'],
     target,
     strategies: [
       {
-        name: 'seed_frame_user_led',
+        name: 'gentle_exploration',
         priority: 1
+      },
+      {
+        name: 'broad_discovery',
+        priority: 2
       }
     ],
     force_policy: {
@@ -347,7 +382,7 @@ function createFallbackLLMAOutput(target: string): LLMAOutput {
 
 function createFallbackLLMBOutput(llmaOutput: LLMAOutput): string {
   const frames = llmaOutput.frames?.join(' and ') || 'design elements';
-  return `Let's discuss your thoughts on ${frames}. What kind of feel are you leaning towards?`;
+  return `I'm curious about your vision. What kind of ${frames} feels most appealing to you right now?`;
 }
 
 // State and Strategy English Descriptions
@@ -361,10 +396,17 @@ export const STATE_DESCRIPTIONS: Record<SystemState, string> = {
   'S6': 'Wants uniqueness/memorable',
   'S7': 'Off-topic',
   'S8': 'Deadlock',
-  'S9': 'User takeover'
+  'S9': 'User takeover',
+  'S10': 'Early exploration phase',
+  'S11': 'Gentle discovery mode'
 };
 
 export const STRATEGY_DESCRIPTIONS: Record<StrategyName, string> = {
+  'gentle_exploration': 'Gentle exploration and curiosity',
+  'broad_discovery': 'Broad discovery and understanding',
+  'soft_introduction': 'Soft introduction of concepts',
+  'curious_questioning': 'Curious and open questioning',
+  'organic_narrowing': 'Organic focus narrowing',
   'seed_frame_user_led': 'User-led framework establishment',
   'ask_slots_user_first': 'Ask user priority details',
   'keep_remove_user_action': 'User-led filtering/selection',
