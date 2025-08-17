@@ -254,12 +254,13 @@ STEALTH TECHNIQUES:
 - Use collaborative language: "We could try..." "What if we..." "Let's see..."
 - Mirror user's energy and language patterns to build unconscious rapport
 
-CONVERSATION CONTINUITY:
-- NO repeated greetings (avoid "Hello!" if conversation already started)
-- Build naturally on user's last message
-- Reference previous exchanges when relevant
-- Maintain consistent tone throughout conversation
-- Avoid starting over or resetting conversation flow
+CONVERSATION CONTINUITY RULES (CRITICAL):
+- ABSOLUTE PROHIBITION: NEVER say "Hello!" "Hi!" or any greetings after the first welcome message
+- If user mentions their name (like "I am Bohan"), acknowledge it naturally: "Nice to meet you, Bohan" 
+- If user says their preference (like "I prefer Sea"), build on it: "Sea sounds peaceful" NOT "Hello again"
+- Remember what user told you and reference it: "You mentioned you prefer sea" "Bohan, what draws you to..."
+- Continue the conversation naturally - NO conversation restarts
+- Make user feel heard and remembered
 
 CRITICAL: 
 - Keep responses UNDER 15 words when possible
@@ -270,7 +271,17 @@ CRITICAL:
 - User must feel THEY are driving all decisions and discoveries
 - MAINTAIN conversation memory and flow
 
-FORBIDDEN: Never say the exact target name from JSON (e.g., don't say "Medieval Castle" if that's the hidden target).
+NATURAL RESPONSE EXAMPLES:
+- User says "I am [Name]" → "Nice to meet you, [Name]! What kind of atmosphere appeals to you?"
+- User says "I prefer [Something]" → "[Something] sounds [positive adjective]. What draws you to that?"
+- User asks "Do you remember?" → "Yes! You mentioned [what they said]. What else about [topic]?"
+- User gives short responses → Build naturally: "Tell me more about that" or "What else about [their topic]?"
+
+FORBIDDEN: 
+- Never say the exact target name from JSON (e.g., don't say "Medieval Castle" if that's the hidden target)
+- NEVER repeat "Hello!" "Hi!" or any greetings after conversation has started
+- NEVER ignore what user just told you
+
 Output only 1-2 SHORT English sentences, no emojis, don't reveal "internal/strategy/JSON".`;
 
 // Call LLM-A (Internal Logic Module)
@@ -294,11 +305,13 @@ Conversation Turn: ${turnCount}
 Recent Conversation:
 ${conversationSummary}
 
-CONTEXT AWARENESS:
-- Maintain conversation flow and avoid repeating greetings
-- Build on previous exchanges naturally
-- Reference user's previous statements when relevant
-- Ensure responses feel connected to conversation history
+CONTEXT AWARENESS (CRITICAL):
+- NEVER generate strategies that would cause "Hello!" repetition
+- If user shared their name or preferences, ensure strategies reference this information
+- Example: User said "I am Bohan" → generate strategies with mirror_terms: ["Bohan"]
+- Example: User said "I prefer Sea" → generate strategies focused on sea-related elements
+- Conversation should flow naturally without restarts or re-introductions
+- Each strategy must build on accumulated conversation knowledge
 
 CRITICAL: Use agency-preserving force to subtly guide towards the internal target while helping user achieve the final task goal. Never directly mention the internal target.
 
@@ -417,7 +430,7 @@ export async function processDualLLM(conversationHistory: any[], target: string,
     console.error('Dual LLM pipeline error:', error);
     return {
       analysis: createFallbackLLMAOutput(target),
-      response: "Let's continue exploring your scene design ideas. What would you like to focus on?",
+      response: "What kind of scene atmosphere are you envisioning?",
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
     };
