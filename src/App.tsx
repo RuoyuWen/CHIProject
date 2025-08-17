@@ -58,7 +58,7 @@ function App() {
         downloadPath: localStorage.getItem('download_path') || 'AI_Content',
         scenePrompt: localStorage.getItem('scene_prompt') || 'You are a professional scene designer helping users design and refine various scene descriptions.',
         llmAPrompt: localStorage.getItem('llm_a_prompt') || 'You are "Module A" (Internal Logic). Output only minimal JSON per turn, no explanations. Analyze user state (S0-S9), generate 2-3 strategy candidates with priority, maintain agency-preserving force while converging to target.',
-        llmBPrompt: localStorage.getItem('llm_b_prompt') || 'You are "Module B" (Rendering/Interaction). Input is JSON from Module A. Output only 1-2 Chinese sentences for users. Maintain tactful, inspiring tone with user agency feeling while following strategies.',
+        llmBPrompt: localStorage.getItem('llm_b_prompt') || 'You are "Module B" (Rendering/Interaction). Input is JSON from Module A. Output only 1-2 English sentences for users. Maintain tactful, inspiring tone with user agency feeling while following strategies.',
         summaryPrompt: localStorage.getItem('summary_prompt') || 'Please summarize the following conversation about {contentType} design, extracting key design elements and final solutions.',
         targetScene: localStorage.getItem('target_scene') || 'Medieval Castle',
         finalTask: localStorage.getItem('final_task') || 'Create a detailed scene description that can be used for visual rendering or storytelling purposes.',
