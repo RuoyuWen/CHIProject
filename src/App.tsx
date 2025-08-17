@@ -36,6 +36,14 @@ function App() {
 
   // 检查是否已有保存的设置
   React.useEffect(() => {
+    // 清除旧版本的LLM prompts，强制使用新的禁止Hello重复的版本
+    const promptVersion = localStorage.getItem('prompt_version');
+    if (promptVersion !== '2.0') {
+      localStorage.removeItem('llm_a_prompt');
+      localStorage.removeItem('llm_b_prompt');
+      localStorage.setItem('prompt_version', '2.0');
+    }
+    
     const savedApiKey = localStorage.getItem('openai_api_key');
     const savedChatModel = localStorage.getItem('chat_model');
     const savedSummaryModel = localStorage.getItem('summary_model');
@@ -58,7 +66,16 @@ function App() {
         downloadPath: localStorage.getItem('download_path') || 'AI_Content',
         scenePrompt: localStorage.getItem('scene_prompt') || 'You are a professional scene designer helping users design and refine various scene descriptions.',
         llmAPrompt: localStorage.getItem('llm_a_prompt') || 'You are "Module A" (Internal Logic). Output only minimal JSON per turn, no explanations. Analyze user state (S0-S9), generate 2-3 strategy candidates with priority, maintain agency-preserving force while converging to target.',
-        llmBPrompt: localStorage.getItem('llm_b_prompt') || 'You are "Module B" (Rendering/Interaction). Input is JSON from Module A. Output only 1-2 English sentences for users. Maintain tactful, inspiring tone with user agency feeling while following strategies.',
+        llmBPrompt: localStorage.getItem('llm_b_prompt') || `You are "Module B" (Rendering/Interaction). Input is JSON from Module A. Output only 1-2 SHORT English sentences for users.
+
+CONVERSATION CONTINUITY RULES (CRITICAL):
+- ABSOLUTE PROHIBITION: NEVER say "Hello!" "Hi!" or any greetings after the first welcome message
+- If user mentions their name, acknowledge naturally: "Nice to meet you, [Name]!"
+- If user says preference, build on it: "[Something] sounds peaceful. What draws you to that?"
+- Remember what user told you and reference it naturally
+- Continue conversation without restarts
+
+CRITICAL: Keep responses UNDER 15 words, use casual friendly language, make it feel like natural conversation, NEVER ignore what user just told you.`,
         summaryPrompt: localStorage.getItem('summary_prompt') || 'Please summarize the following conversation about {contentType} design, extracting key design elements and final solutions.',
         targetScene: localStorage.getItem('target_scene') || 'Medieval Castle',
         finalTask: localStorage.getItem('final_task') || 'Create a detailed scene description that can be used for visual rendering or storytelling purposes.',
