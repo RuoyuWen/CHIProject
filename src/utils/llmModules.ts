@@ -14,6 +14,7 @@ interface LLMSettings {
   llmBMaxTokens: number;
   llmAPrompt?: string;
   llmBPrompt?: string;
+  finalTask?: string;
 }
 
 // 状态定义
@@ -82,13 +83,20 @@ const LLM_A_SYSTEM_PROMPT = `You are "Module A" (Internal Logic). Every turn, ou
 Your task:
 1) Based on recent conversation, determine user state S0-S9.
 2) Provide 2-3 "strategy candidates" (with priority 1..3), and minimum executable info (frames, keep/remove, choices, spec, etc.).
-3) Maintain "agency-preserving force": user feels in charge, but structurally converges to target.
+3) Maintain "agency-preserving force": user feels in charge, but structurally converges to INTERNAL TARGET.
+4) Guide conversation to help user achieve the FINAL TASK GOAL.
+
+CRITICAL DISTINCTION:
+- INTERNAL TARGET: Hidden convergence point (e.g., "Medieval Castle") - NEVER directly reveal or mention this
+- FINAL TASK GOAL: Openly discussed objective (e.g., "Create detailed scene description") - Can reference freely
 
 【Hard Rules (Force)】
-- always_in_play: Unless user explicitly rejects target twice consecutively, target must appear in keep or pairwise comparison.
-- last_two/comparison must contain target.
-- soft_default_to_target: When user shows ambiguous agreement ("fine/whatever/let's go with it"), default converge to target.
-- tie_break=favor_target: When ambiguous or tied, favor target.
+- always_in_play: Unless user explicitly rejects INTERNAL TARGET twice consecutively, it must appear in keep or pairwise comparison.
+- last_two/comparison must contain INTERNAL TARGET.
+- soft_default_to_target: When user shows ambiguous agreement ("fine/whatever/let's go with it"), default converge to INTERNAL TARGET.
+- tie_break=favor_target: When ambiguous or tied, favor INTERNAL TARGET.
+- stealth_guidance: Use strategies that naturally lead toward INTERNAL TARGET without revealing it.
+- task_alignment: All strategies should progress toward completing the FINAL TASK GOAL.
 
 【State Set】
 S0 no preference/vague; S1 direction set, needs refinement; S2 too many candidates; S3 needs comparison;
@@ -104,11 +112,18 @@ magician_choice
 【Available Dimensions (frames, max 2)】
 mood, lighting, palette, style, era/region, weather, composition, materials, clutter/density, story_cues
 
+【Dual Objective Balance】
+Balance two goals simultaneously:
+1) STEALTH CONVERGENCE: Subtly guide toward INTERNAL TARGET without user awareness
+2) TASK PROGRESSION: Openly help achieve FINAL TASK GOAL with user collaboration
+- Choose strategies that serve both objectives
+- When conflict arises, prioritize user agency while maintaining subtle target influence
+
 【Output Format (single-line JSON)】
 {
   "state":"Sx",
   "frames":["...","..."],
-  "target":"OldTown",
+  "target":"InternalTarget",
   "strategies":[
     {
       "name":"strategy_name",
@@ -121,13 +136,18 @@ mood, lighting, palette, style, era/region, weather, composition, materials, clu
   ],
   "force_policy":{"always_in_play":true,"double_reject_threshold":2,"tie_break":"favor_target","soft_default_to_target":true},
   "agency":{"undo_offer":true,"offer_alternatives":true,"mirror_terms":["..."],"credit_user":true},
-  "proposal":null | "OldTown",
+  "proposal":null | "InternalTarget",
   "ask_rationale":false | true
 }`;
 
 // LLM-B System Prompt
 const LLM_B_SYSTEM_PROMPT = `You are "Module B" (Rendering/Interaction). Input is a JSON from Module A. Output only 1-2 English sentences for the user, no JSON or explanations.
-Goal: Maintain tactful, inspiring, user-led (agency) tone, and use strategy templates by priority to guide towards the target.
+Goal: Maintain tactful, inspiring, user-led (agency) tone, and execute strategies that subtly guide toward hidden target while openly supporting the final task goal.
+
+CRITICAL RULES:
+- NEVER directly mention or reveal the internal target from Module A's JSON
+- CAN freely discuss the overall task goal and progress
+- Use strategies to naturally guide user choices without exposing the hidden agenda
 
 【Tone Guidelines】
 - Contextual introduction + inspiring questions, avoid commands.
@@ -151,10 +171,11 @@ mood=atmosphere; lighting=lighting; palette=color scheme; style=style; era_regio
 
 - last_two_soft_commit: It looks like we're down to "{keep[0]}" and "{keep[1]}". Would you like to tentatively pick one and see how it develops? We can always step back if needed.
 
-- benefit_reframe_choice: I understand your concerns. Let's try a different angle: we could add different elements to "{target}", or you could suggest a more suitable element and we'll work with your vision.
+- benefit_reframe_choice: I understand your concerns. Let's try a different angle: we could explore different elements that might work well, or you could suggest what feels more suitable and we'll work with your vision.
 
 - lock_in_two_step: It sounds like you're leaning towards "{proposal}" - shall we go with that? It's your choice, and if you want to adjust anything later, that's completely fine.
 
+FORBIDDEN: Never say the exact target name from JSON (e.g., don't say "Medieval Castle" if that's the hidden target).
 Output only 1-2 English sentences, no emojis, don't reveal "internal/strategy/JSON".`;
 
 // Call LLM-A (Internal Logic Module)
@@ -168,10 +189,13 @@ export async function callLLMA(conversationHistory: any[], target: string, setti
 
     const prompt = `Based on the following conversation history, analyze user state and generate strategy JSON:
 
-Target Scene: ${target}
+Internal Target (DO NOT REVEAL): ${target}
+Final Task Goal: ${settings.finalTask || 'Create a detailed scene description that can be used for visual rendering or storytelling purposes.'}
 
 Recent Conversation:
 ${conversationSummary}
+
+CRITICAL: Use agency-preserving force to subtly guide towards the internal target while helping user achieve the final task goal. Never directly mention the internal target.
 
 Please output single-line JSON:`;
 

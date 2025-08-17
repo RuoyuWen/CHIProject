@@ -112,7 +112,8 @@ Please tell me your ideas and requirements, and I'll help you refine your design
           llmBTemperature: settings?.llmBTemperature || 0.8,
           llmBMaxTokens: settings?.llmBMaxTokens || 800,
           llmAPrompt: settings?.llmAPrompt,
-          llmBPrompt: settings?.llmBPrompt
+          llmBPrompt: settings?.llmBPrompt,
+          finalTask: settings?.finalTask
         });
 
         // 保存分析结果用于展示
