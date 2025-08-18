@@ -133,12 +133,22 @@ Please tell me your ideas and requirements, and I'll help you refine your design
         }));
 
       } else {
-        // 传统模式：直接调用OpenAI API
+        // 传统模式：直接调用OpenAI API，包含target scene和final task
+        const enhancedSystemPrompt = `${selectedModule.systemPrompt}
+
+Target Scene: ${settings?.targetScene || 'Default Scene'}
+Final Task Goal: ${settings?.finalTask || 'Create a detailed scene description that can be used for visual rendering or storytelling purposes.'}
+
+Please keep these goals in mind during the conversation and guide the user naturally toward achieving the final task while focusing on the target scene.`;
+
         const conversationHistory = [
-          { role: 'system', content: selectedModule.systemPrompt },
+          { role: 'system', content: enhancedSystemPrompt },
           ...messages.map(m => ({ role: m.role, content: m.content })),
           { role: 'user', content: userMessage.content }
         ];
+
+        // 为传统模式添加1秒延迟以匹配双LLM模式的响应时间
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         const aiResponse = await sendMessage(conversationHistory, settings);
 
@@ -193,10 +203,23 @@ Please tell me your ideas and requirements, and I'll help you refine your design
 
     setIsLoading(true);
     try {
-      // Generate conversation summary using custom prompt
+      // Generate conversation summary using custom prompt with Final Task Goal
       const customSummaryPrompt = settings.summaryPrompt.replace(/{contentType}/g, selectedModule.title);
       const summaryPrompt = `
 ${customSummaryPrompt}
+
+CRITICAL REQUIREMENTS:
+- Final Task Goal: ${settings.finalTask}
+- You MUST create a summary that satisfies the Final Task Goal, regardless of conversation content
+- MUST include comprehensive environmental descriptions (lighting, weather, time of day, atmosphere)
+- MUST include detailed sound effects and audio atmosphere (ambient sounds, music, specific sound elements)
+- If the conversation doesn't provide enough details, creatively fill in appropriate environmental and audio elements to complete the Final Task Goal
+
+STRUCTURE YOUR SUMMARY AS:
+1. Scene Overview (fulfilling the Final Task Goal)
+2. Environmental Details (lighting, atmosphere, weather, colors, textures)
+3. Audio & Sound Design (ambient sounds, music, sound effects, atmospheric audio)
+4. Additional Creative Elements (if needed to complete the Final Task Goal)
 
 Conversation content:
 ${messages.map(m => `${m.role === 'user' ? 'User' : 'AI'}: ${m.content}`).join('\n')}

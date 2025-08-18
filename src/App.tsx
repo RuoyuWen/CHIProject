@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings } from 'lucide-react';
 import { ContentPanel } from './components/ContentPanel';
 import { ChatPanel } from './components/ChatPanel';
@@ -35,13 +35,12 @@ function App() {
   } | null>(null);
 
   // 检查是否已有保存的设置
-  React.useEffect(() => {
-    // 清除旧版本的LLM prompts，强制使用新的禁止Hello重复的版本
+  useEffect(() => {
+    // 只在首次使用时设置版本，不清除用户自定义设置
     const promptVersion = localStorage.getItem('prompt_version');
-    if (promptVersion !== '2.0') {
-      localStorage.removeItem('llm_a_prompt');
-      localStorage.removeItem('llm_b_prompt');
-      localStorage.setItem('prompt_version', '2.0');
+    if (!promptVersion) {
+      console.log('Setting initial prompt version to 10.0');
+      localStorage.setItem('prompt_version', '10.0');
     }
     
     const savedApiKey = localStorage.getItem('openai_api_key');
@@ -65,18 +64,45 @@ function App() {
         llmBMaxTokens: parseInt(localStorage.getItem('llm_b_max_tokens') || '800'),
         downloadPath: localStorage.getItem('download_path') || 'AI_Content',
         scenePrompt: localStorage.getItem('scene_prompt') || 'You are a professional scene designer helping users design and refine various scene descriptions.',
-        llmAPrompt: localStorage.getItem('llm_a_prompt') || 'You are "Module A" (Internal Logic). Output only minimal JSON per turn, no explanations. Analyze user state (S0-S9), generate 2-3 strategy candidates with priority, maintain agency-preserving force while converging to target.',
-        llmBPrompt: localStorage.getItem('llm_b_prompt') || `You are "Module B" (Rendering/Interaction). Input is JSON from Module A. Output only 1-2 SHORT English sentences for users.
+        llmAPrompt: localStorage.getItem('llm_a_prompt') || `CRITICAL STATE RECOGNITION:
+- Greetings like "Hi", "Hello", "I am [Name]" are S10 (early_exploration) NOT S7 (off-topic)
+- S7 is only for truly unrelated topics like weather, politics, or completely different subjects
+- Social courtesies and introductions are part of natural conversation flow
 
-CONVERSATION CONTINUITY RULES (CRITICAL):
-- ABSOLUTE PROHIBITION: NEVER say "Hello!" "Hi!" or any greetings after the first welcome message
-- If user mentions their name, acknowledge naturally: "Nice to meet you, [Name]!"
+QUESTION DETECTION RULES:
+- ALWAYS extract user questions into user_question field (e.g., "what's your name?")
+- ALWAYS extract user names into user_name field when they introduce themselves
+- Questions MUST be answered before any topic guidance`,
+        llmBPrompt: localStorage.getItem('llm_b_prompt') || `CONVERSATION CONTINUITY RULES (CRITICAL):
+- SOCIAL POLITENESS: Always respond naturally to greetings and basic social interactions
+- If user says "Hi" or "Hello", respond warmly: "Hi there!" then smoothly continue the conversation
+- If user mentions their name, acknowledge naturally: "Very nice to meet you, [Name]!" then gentle topic transition
+- If user asks questions about you (like "what's your name?"), answer briefly: "I'm your design assistant!"
+- NEVER ignore user questions - always acknowledge and respond to what they asked
 - If user says preference, build on it: "[Something] sounds peaceful. What draws you to that?"
 - Remember what user told you and reference it naturally
-- Continue conversation without restarts
+- Balance natural social responses with topic progression - don't ignore basic courtesy
 
-CRITICAL: Keep responses UNDER 15 words, use casual friendly language, make it feel like natural conversation, NEVER ignore what user just told you.`,
-        summaryPrompt: localStorage.getItem('summary_prompt') || 'Please summarize the following conversation about {contentType} design, extracting key design elements and final solutions.',
+THREE-STEP CONVERSATION STRUCTURE:
+- Step 1: Direct response to their question/statement
+- Step 2: Natural bridge/transition sentence  
+- Step 3: Gentle guide back to design task
+- Example: User talks about weather → "That sounds lovely! Weather affects our mood so much. What kinds of spaces make you feel good?"
+- Example: User mentions food → "That sounds delicious! Food brings such warmth. What environments help you relax?"
+- Keep each sentence short and natural - avoid being abrupt or overly long
+
+QUESTION HANDLING PRIORITY:
+- If user_question exists: MUST answer question first, then add topic transition
+- If user_name exists: MUST acknowledge name with greeting
+- Never ignore questions - they take precedence over topic guidance
+
+THREE-STEP CONVERSATION TEMPLATES:
+- Question response: "[Answer their question]! [Natural bridge statement]. [Gentle design question]."
+- Name introduction: "Nice to meet you, [Name]! I'm your design assistant. [Simple design question]."
+- Daily topic acknowledgment: "[Positive response]! [Relatable bridge]. [Space/atmosphere question]."
+
+CRITICAL: Keep each sentence short and natural (under 8-10 words per sentence), use three-step structure: Response + Bridge + Design question, make it feel like natural conversation, NEVER ignore what user just told you.`,
+        summaryPrompt: localStorage.getItem('summary_prompt') || 'Based on the conversation about {contentType} design, create a comprehensive summary that fulfills the Final Task Goal. Include detailed environmental descriptions (lighting, atmosphere, weather, colors) and complete audio design (ambient sounds, music, sound effects). If conversation lacks details, creatively add appropriate elements to complete the scene design.',
         targetScene: localStorage.getItem('target_scene') || 'Medieval Castle',
         finalTask: localStorage.getItem('final_task') || 'Create a detailed scene description that can be used for visual rendering or storytelling purposes.',
         aiMode: localStorage.getItem('ai_mode') || 'modeD'
@@ -113,6 +139,11 @@ CRITICAL: Keep responses UNDER 15 words, use casual friendly language, make it f
     moduleId: string;
     summary: string;
   } | null>(null);
+  
+  // Timer states
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [endTime, setEndTime] = useState<number | null>(null);
+  const [totalTime, setTotalTime] = useState<string | null>(null);
   
   // Individual chat memories for each module
   const [moduleChats, setModuleChats] = useState<{
@@ -160,6 +191,15 @@ CRITICAL: Keep responses UNDER 15 words, use casual friendly language, make it f
 
   const handleModuleSelect = (module: ContentModule) => {
     setSelectedModule(module);
+    
+    // Start timer when Scene module is selected
+    if (module.id === 'scene') {
+      const now = Date.now();
+      setStartTime(now);
+      setEndTime(null);
+      setTotalTime(null);
+      console.log('🕐 Timer started for Scene design');
+    }
   };
 
   const handleContentSuggestion = (moduleId: string, summary: string) => {
@@ -203,7 +243,25 @@ CRITICAL: Keep responses UNDER 15 words, use casual friendly language, make it f
 
   // Download function
   const handleDownload = () => {
-    const content = contentItems.map(item => 
+    // End timer when download is clicked
+    let timeInfo = '';
+    if (startTime) {
+      const now = Date.now();
+      setEndTime(now);
+      const duration = now - startTime;
+      
+      // Format time as MM:SS
+      const minutes = Math.floor(duration / 60000);
+      const seconds = Math.floor((duration % 60000) / 1000);
+      const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      setTotalTime(formattedTime);
+      timeInfo = `========================================\n⏱️  COMPLETION TIME: ${formattedTime}\n========================================\n\n`;
+      
+      console.log(`🕐 Timer ended. Total time: ${formattedTime}`);
+    }
+    
+    const content = timeInfo + contentItems.map(item => 
       `${item.title}:\n${item.content || 'Not completed'}\n\n`
     ).join('');
 
@@ -296,6 +354,7 @@ CRITICAL: Keep responses UNDER 15 words, use casual friendly language, make it f
           </div>
         </header>
 
+        
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
           <ContentPanel
             items={contentItems}

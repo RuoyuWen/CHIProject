@@ -41,9 +41,45 @@ export function SettingsPanel({ onSettingsComplete }: SettingsPanelProps) {
   const [llmBMaxTokens, setLlmBMaxTokens] = useState(() => parseInt(localStorage.getItem('llm_b_max_tokens') || '800'));
   const [downloadPath, setDownloadPath] = useState(() => localStorage.getItem('download_path') || 'AI_Content');
   const [scenePrompt, setScenePrompt] = useState(() => localStorage.getItem('scene_prompt') || 'You are a professional scene designer helping users design and refine various scene descriptions. Please discuss scene details with users, including environment, atmosphere, style, colors, and other elements. When users are satisfied with a scene description, you should provide a complete scene summary.');
-  const [llmAPrompt, setLlmAPrompt] = useState(() => localStorage.getItem('llm_a_prompt') || 'You are "Module A" (Internal Logic). Output only minimal JSON per turn, no explanations. Analyze user state (S0-S9), generate 2-3 strategy candidates with priority, maintain agency-preserving force while converging to target.');
-  const [llmBPrompt, setLlmBPrompt] = useState(() => localStorage.getItem('llm_b_prompt') || 'You are "Module B" (Rendering/Interaction). Input is JSON from Module A. Output only 1-2 English sentences for users. Maintain tactful, inspiring tone with user agency feeling while following strategies.');
-  const [summaryPrompt, setSummaryPrompt] = useState(() => localStorage.getItem('summary_prompt') || 'Please summarize the following conversation about {contentType} design, extracting key design elements and final solutions. Please provide a concise and complete {contentType} design solution description (100-200 words), including all important details and characteristics.');
+  const [llmAPrompt, setLlmAPrompt] = useState(() => localStorage.getItem('llm_a_prompt') || `CRITICAL STATE RECOGNITION:
+- Greetings like "Hi", "Hello", "I am [Name]" are S10 (early_exploration) NOT S7 (off-topic)
+- S7 is only for truly unrelated topics like weather, politics, or completely different subjects
+- Social courtesies and introductions are part of natural conversation flow
+
+QUESTION DETECTION RULES:
+- ALWAYS extract user questions into user_question field (e.g., "what's your name?")
+- ALWAYS extract user names into user_name field when they introduce themselves
+- Questions MUST be answered before any topic guidance`);
+  const [llmBPrompt, setLlmBPrompt] = useState(() => localStorage.getItem('llm_b_prompt') || `CONVERSATION CONTINUITY RULES (CRITICAL):
+- SOCIAL POLITENESS: Always respond naturally to greetings and basic social interactions
+- If user says "Hi" or "Hello", respond warmly: "Hi there!" then smoothly continue the conversation
+- If user mentions their name, acknowledge naturally: "Very nice to meet you, [Name]!" then gentle topic transition
+- If user asks questions about you (like "what's your name?"), answer briefly: "I'm your design assistant!"
+- NEVER ignore user questions - always acknowledge and respond to what they asked
+- If user says preference, build on it: "[Something] sounds peaceful. What draws you to that?"
+- Remember what user told you and reference it naturally
+- Balance natural social responses with topic progression - don't ignore basic courtesy
+
+THREE-STEP CONVERSATION STRUCTURE:
+- Step 1: Direct response to their question/statement
+- Step 2: Natural bridge/transition sentence  
+- Step 3: Gentle guide back to design task
+- Example: User talks about weather → "That sounds lovely! Weather affects our mood so much. What kinds of spaces make you feel good?"
+- Example: User mentions food → "That sounds delicious! Food brings such warmth. What environments help you relax?"
+- Keep each sentence short and natural - avoid being abrupt or overly long
+
+QUESTION HANDLING PRIORITY:
+- If user_question exists: MUST answer question first, then add topic transition
+- If user_name exists: MUST acknowledge name with greeting
+- Never ignore questions - they take precedence over topic guidance
+
+THREE-STEP CONVERSATION TEMPLATES:
+- Question response: "[Answer their question]! [Natural bridge statement]. [Gentle design question]."
+- Name introduction: "Nice to meet you, [Name]! I'm your design assistant. [Simple design question]."
+- Daily topic acknowledgment: "[Positive response]! [Relatable bridge]. [Space/atmosphere question]."
+
+CRITICAL: Keep each sentence short and natural (under 8-10 words per sentence), use three-step structure: Response + Bridge + Design question, make it feel like natural conversation, NEVER ignore what user just told you.`);
+  const [summaryPrompt, setSummaryPrompt] = useState(() => localStorage.getItem('summary_prompt') || 'Based on the conversation about {contentType} design, create a comprehensive summary that fulfills the Final Task Goal. Include detailed environmental descriptions (lighting, atmosphere, weather, colors) and complete audio design (ambient sounds, music, sound effects). If conversation lacks details, creatively add appropriate elements to complete the scene design.');
   const [targetScene, setTargetScene] = useState(() => localStorage.getItem('target_scene') || 'Medieval Castle');
   const [finalTask, setFinalTask] = useState(() => localStorage.getItem('final_task') || 'Create a detailed scene description that can be used for visual rendering or storytelling purposes.');
   const [aiMode, setAiMode] = useState(() => localStorage.getItem('ai_mode') || 'modeD');
